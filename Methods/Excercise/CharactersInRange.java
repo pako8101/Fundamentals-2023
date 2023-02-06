@@ -12,9 +12,14 @@ public class CharactersInRange {
     }
 
     public static void printChar(char a, char b) {
-        for (char i = a; i < b; i++) {
-                System.out.print( i + " ");
+        if (a < b) {
+            for (char i = (char) (a + 1); i < b; i++) {
+                System.out.print(i + " ");
             }
-            System.out.println();
+        } else {
+            for (char i = (char) (b + 1); i < a; i++) {
+                System.out.print(i + " ");
+            }
         }
     }
+}
