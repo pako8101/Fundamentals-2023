@@ -1,82 +1,85 @@
 package ProgrammingFundamentalsWithJava2023.AssociativeArrays.MoreExercises;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
-
 public class MOBA {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        Map<String, LinkedHashMap<String, Integer>> players = new LinkedHashMap<>();
+        String input = scanner.nextLine();
+        while (!input.equals("Season end")) {
+            if (input.contains("->")) {
+                String[] tokens = input.split(" -> ");
+                String player = tokens[0];
+                String position = tokens[1];
+                int skill = Integer.parseInt(tokens[2]);
 
-    class Player {
-        String name;
-        int totalSkill;
-        Map<String, Integer> positions;
+                players.putIfAbsent(player, new LinkedHashMap<>());
+                players.get(player).putIfAbsent(position, 0);
+                int currentSkill = players.get(player).get(position);
+                if (skill > currentSkill) {
+                    players.get(player).put(position, skill);
+                }
+            } else {
+                String[] tokens = input.split(" vs ");
+                String player1 = tokens[0];
+                String player2 = tokens[1];
 
-        public Player(String name) {
-            this.name = name;
-            this.totalSkill = 0;
-            this.positions = new TreeMap<>();
-        }
+                if (players.containsKey(player1) && players.containsKey(player2)) {
+                    Map<String, Integer> positions1 = players.get(player1);
+                    Map<String, Integer> positions2 = players.get(player2);
 
-        public void addPosition(String position, int skill) {
-            if (!positions.containsKey(position) || positions.get(position) < skill) {
-                positions.put(position, skill);
-                totalSkill += skill;
-            }
-        }
-    }
+                    int totalSkill1 = positions1.values().stream().mapToInt(Integer::intValue).sum();
+                    int totalSkill2 = positions2.values().stream().mapToInt(Integer::intValue).sum();
 
-    class MOBAChallenger {
-        static Map<String, Player> players;
-
-        public void main(String[] args) {
-            players = new TreeMap<>();
-            Scanner scanner = new Scanner(System.in);
-            String line;
-            while (!"Season end".equals(line = scanner.nextLine())) {
-                String[] tokens = line.split(" -> | vs ");
-                if (tokens.length == 3) {
-                    // "{player} -> {position} -> {skill}"
-                    String player = tokens[0];
-                    String position = tokens[1];
-                    int skill = Integer.parseInt(tokens[2]);
-                    if (!players.containsKey(player)) {
-                        players.put(player, new Player(player));
+                    boolean hasCommonPosition = false;
+                    for (String position : positions1.keySet()) {
+                        if (positions2.containsKey(position)) {
+                            hasCommonPosition = true;
+                            break;
+                        }
                     }
-                    players.get(player).addPosition(position, skill);
-                } else {
-                    // "{player} vs {player}"
-                    String player1 = tokens[0];
-                    String player2 = tokens[1];
-                    if (players.containsKey(player1) && players.containsKey(player2)) {
-                        Player p1 = players.get(player1);
-                        Player p2 = players.get(player2);
-                        boolean duelHappened = false;
-                        for (String position : p1.positions.keySet()) {
-                            if (p2.positions.containsKey(position)) {
-                                duelHappened = true;
-                                if (p1.totalSkill > p2.totalSkill) {
-                                    players.remove(p2.name);
-                                } else if (p1.totalSkill < p2.totalSkill) {
-                                    players.remove(p1.name);
+
+                    if (hasCommonPosition) {
+                        if (totalSkill1 > totalSkill2) {
+                            players.remove(player2);
+                        } else if (totalSkill1 < totalSkill2) {
+                            players.remove(player1);
+                        }
+                    }
+                }
+            }
+
+            input = scanner.nextLine();
+        }
+
+        players.entrySet().stream()
+                .sorted((p1, p2) -> {
+                    int totalSkill1 = p1.getValue().values().stream().mapToInt(Integer::intValue).sum();
+                    int totalSkill2 = p2.getValue().values().stream().mapToInt(Integer::intValue).sum();
+                    if (totalSkill1 != totalSkill2) {
+                        return Integer.compare(totalSkill2, totalSkill1);
+                    } else {
+                        return p1.getKey().compareTo(p2.getKey());
+                    }
+                })
+                .forEach(player -> {
+                    int totalSkill = player.getValue().values().stream().mapToInt(Integer::intValue).sum();
+                    System.out.printf("%s: %d skill%n", player.getKey(), totalSkill);
+
+                    player.getValue().entrySet().stream()
+                            .sorted((p1, p2) -> {
+                                if (p1.getValue() != p2.getValue()) {
+                                    return Integer.compare(p2.getValue(), p1.getValue());
+                                } else {
+                                    return p1.getKey().compareTo(p2.getKey());
                                 }
-                                break;
-                            }
-                        }
-                        if (!duelHappened) {
-                            // duel not happening
-                        }
-                    }
-                }
-            }
-
-            // print players
-            for (Player player : players.values()) {
-                System.out.println(player.name + ": " + player.totalSkill + " skill");
-                for (Map.Entry<String, Integer> entry : player.positions.entrySet()) {
-                    System.out.println("- " + entry.getKey() + " <::> " + entry.getValue());
-                }
-            }
-        }
-
+                            })
+                            .forEach(position -> {
+                                System.out.printf("- %s <::> %d%n", position.getKey(), position.getValue());
+                            });
+                });
     }
 }
